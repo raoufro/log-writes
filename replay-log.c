@@ -83,8 +83,11 @@ static int should_stop(struct log_write_entry *entry, u64 stop_flags,
 static int run_fsck(char *fsck_command)
 {
 	int ret = system(fsck_command);
+	ret = (ret < 0) ? ret : WEXITSTATUS(ret);
 
-	return (ret < 0) ? ret : WEXITSTATUS(ret);
+	if (ret == 255)
+		ret = -1;
+	return ret;
 }
 
 enum log_replay_check_mode {
@@ -311,6 +314,12 @@ int main(int argc, char **argv)
 
 	while ((ret = log_replay_next_entry(log, entry, 1)) == 0) {
 		num_entries++;
+
+		char entry_num_str[16];
+		sprintf(entry_num_str, "%llu" , (log->cur_entry - 1) );
+		if ((ret = setenv("ENTRY_NUM", entry_num_str, 1) == -1))
+			break;
+
 		if (fsck_command) {
 			if ((check_mode == CHECK_NUMBER) &&
 			    !(num_entries % check_number))

@@ -7,3 +7,6 @@ replay-log: $(objs)
 	$(CC) $(CFLAGS) -o replay-log $(objs)
 
 all: $(progs)
+clean:
+	rm *.o
+	rm $(progs)
